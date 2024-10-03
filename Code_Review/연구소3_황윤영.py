@@ -1,4 +1,130 @@
 """
+1차
+풀이 시간 : 19분
+시도 횟수 : 2회
+실행 시간 : 196ms
+메모리 : 114724kb
+
+2차
+풀이 시간 : 24분
+시도 횟수 : 2회
+실행 시간 : 180 ms
+메모리 : 114700 kb
+
+
+- 실수 모음
+    - 문제 조건 놓침 : 병원은 cnt 안올리고 그냥 지나갈 수 있는 것 간과 
+    - bfs visited 누락
+    - bfs return 값 실수
+
+
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 테스트케이스 외에 고려해야할 사항 생각해보기 + 설계에 반영
+    : visited선언 bfs에서 매전 해도 괜찮을지 체크
+5. 종이에 손설계 OK
+6. 주석으로 구현할 영역 정리 : no 구현할 양이 너무 간단했음
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인 : ok. 테케 안맞아서 프린트해서 확인해봄
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!!
+"""
+
+
+"""
+====================== 2차 코드 리뷰 ====================
+1406 문제 읽기 시작 + 주석 정리 
+1410 설계시작 
+1413 구현시작 
+1421 테케 안맞음. time + 하는 시점 조정 + 아예 바이러스 없을 때 처리
+1426 오답
+    테케를 보니 병원을 지나칠 수 있음을 알고 bfs에서 continue 조건문 수정해서 해결
+
+"""
+"""
+N×N 크기의 도시
+병원과 벽을 제외한 모든 지역에 바이러스
+M개의 병원을 적절히 고르기
+
+골라진 병원들을 시작으로 매 초마다 상하좌우로 인접한 지역 중 벽을 제외한 지역에
+백신이 공급되기 때문에 그 자리에 있던 바이러스는 사라지게 됩니다.
+
+
+M개의 병원을 적절히 골라 바이러스를 전부 없애는데 걸리는 시간 중 최소 시간을 구하는 프로그램
+
+
+0 : 바이러스
+1 : 벽
+2 : 병원
+
+3≤N≤50
+1≤M≤10
+
+출력
+M개의 병원을 적절히 골라 모든 바이러스를 없애는 데 필요한 최소 시간을 출력
+모든 바이러스를 없앨 수 있는 방법이 없다면 −1을 출력
+"""
+
+
+def bfs(lst):
+    q = lst[:]
+    visited = [[0]*N for _ in range(N)]
+    for i, j in q:
+        visited[i][j] = 1
+    cnt = 0
+    time = 0
+    while q:
+        nq = []
+
+        for cr, cc, in q:
+            for di, dj in (-1, 0), (0, 1), (1, 0), (0, -1):
+                du, dv = cr+di, cc+dj
+                if du<0 or dv<0 or du>=N or dv>=N:
+                    continue
+                if visited[du][dv] or arr[du][dv] ==1:
+                    continue
+                visited[du][dv] = 1
+                nq.append((du, dv))
+                if arr[du][dv] == 0:
+                    cnt += 1
+        time+=1
+        if cnt==virus_cnt:
+            break
+        q = nq
+
+    return cnt==virus_cnt, time
+
+
+def dfs(level, idx, lst):
+    global answer
+    if level==M:
+        flag, time = bfs(lst)
+        if flag:
+            answer = min(answer, time)
+        return
+
+    for i in range(idx, len(hospital_lst)):
+        dfs(level+1, i+1, lst+[hospital_lst[i]])
+
+N, M = map(int, input().split())
+arr = [list(map(int, input().split())) for _ in range(N)]
+hospital_lst = []
+virus_cnt = 0
+for i in range(N):
+    for j in range(N):
+        if arr[i][j] == 2:
+            hospital_lst.append((i, j))
+        elif arr[i][j] == 0:
+            virus_cnt+=1
+answer=  N*N
+if virus_cnt!=0:
+    dfs(0, 0, [])
+else:
+    answer = 0
+print(answer if answer != N*N else -1)
+
+
+"""
 총 풀이시간
 
 1358 문제 읽고 조건 정리 + 슈더코드 작성
