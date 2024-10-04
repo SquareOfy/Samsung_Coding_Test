@@ -1,4 +1,115 @@
 """
+1차
+풀이 시간 : 40분
+시도 횟수 : 2회
+실행 시간 : 316 ms
+메모리 : 127036 KB
+
+1차
+풀이 시간 : 33분
+시도 횟수 : 2회
+실행 시간 : 304 ms
+메모리 : 132256 KB
+
+실수 모음
+    - 인덱스 실수 (모듈)
+    - 로직 누락
+
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 테스트케이스 외에 고려해야할 사항 생각해보기 + 설계에 반영
+    : deque 쓰자
+    : N칸 도착하자마자 내리는 거 놓치지 말기!!
+5. 종이에 손설계 : ok
+6. 주석으로 구현할 영역 정리 : ok
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인
+    : 답 다르길래 deque 사람 움직이기 전 후로 프린트+종이테케 따라가기로
+    틀린 부분 찾음
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!!
+"""
+"""
+==================== 2차 코드 리뷰 ====================
+1646 문제읽기 
+    문제 열심히 읽다가 주석 정리 까먹음 
+1658 설계 및 구현 
+1707 테케 안맞음 디버깅 
+    왜 합쳐진후 분할된 원자가 아니라 엉망진창 뒤섞인 원자들이 있지 ? 
+    원자 분할하는 로직 살핌. 합쳐져서 소멸돼야하는데 이 때 tmp 안비워준 실수 발견! 수정
+1710 오답
+    테케 찾아서 돌려봄 
+    방향이 이상하게 잡히는 것 발견
+    sum_d , multiple_d 구할 때 %2 해주는 것 누락함 
+    고쳐서 실수; 
+
+설계한대로 구현 빼먹지 말고 하자 ..
+
+
+"""
+N, M, K = map(int, input().split())
+arr = [[[] for _ in range(N)] for _ in range(N)]
+DIR = (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)
+for m in range(M):
+    x, y, m, s, d = map(int, input().split())
+    x -= 1
+    y -= 1
+    arr[x][y].append((m, s, d))
+# print("=================초기 상태 ==================")
+# for t in range(N):
+#     print(arr[t])
+# print("=============================================")
+for k in range(K):
+    tmp = [[[] for _ in range(N)] for _ in range(N)]
+    for i in range(N):
+        for j in range(N):
+            if not arr[i][j]: continue
+            # print(arr[i][j])
+            for t in range(len(arr[i][j])):
+                m, s, d = arr[i][j][t]
+                nr = (i + DIR[d][0] * s) % N
+                nc = (j + DIR[d][1] * s) % N
+                tmp[nr][nc].append((m, s, d))
+    for i in range(N):
+        for j in range(N):
+            if len(tmp[i][j]) < 2: continue
+            mm = 0
+            ss = 0
+            multiple_d = 1
+            sum_d = 0
+            for m, s, d in tmp[i][j]:
+                mm += m
+                ss += s
+                multiple_d *= (d%2)
+                sum_d += (d%2)
+
+            new_m = mm//5
+            new_s = ss//len(tmp[i][j])
+            tmp[i][j] = []
+            if new_m ==0:
+                continue
+            new_d = [0, 2, 4, 6] if sum_d==0 or multiple_d==1 else [1, 3, 5, 7]
+
+            for k in range(4):
+                tmp[i][j].append((new_m, new_s, new_d[k]))
+
+
+
+    for i in range(N):
+        for j in range(N):
+            arr[i][j] = tmp[i][j][:]
+    #     print(arr[i])
+    # print("======================================")
+
+answer = 0
+for i in range(N):
+    for j in range(N):
+        for m, s, d in arr[i][j]:
+            answer+= m
+
+print(answer)
+
+"""
 코드리뷰
 총 풀이 시간 40분
 실행 시간 : 316 ms
