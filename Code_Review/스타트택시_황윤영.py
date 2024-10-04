@@ -1,4 +1,165 @@
 """
+1차
+풀이 시간 : 1시간 3분
+시도 횟수 : 5회
+실행 시간 : 196 ms
+메모리 : 115564 kb
+
+2차
+풀이 시간 : 35분
+시도 횟수 : 1회
+실행 시간 : 192 ms
+메모리 : 115076 kb
+
+- 실수 모음
+    - 설계 디테일 부족(다양한 케이스 고려 못했었음)
+    - 함수 return 누락 (None 나와서 TypeError)
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 테스트케이스 외에 고려해야할 사항 생각해보기 + 설계에 반영
+    : 매 이동마다 거리 보기. 승객 못찾는 경우, 목적지 못가는 경우 주의
+
+5. 종이에 손설계 : ok
+6. 주석으로 구현할 영역 정리 : ok
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인 : ok
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!!
+"""
+
+"""
+========================= 2차 코드 리뷰 ==================
+보자마자 이거 와장창 실수 가득했던 문제다 하고 생각남
+1500 문제 주의해서 읽기 시작 + 주석
+1506 설계
+    승객찾는 함수, 승객 데려다 주는 함수로 나눠서 설계
+    이 때 return 뭐할지, info 어떻게 활용할지 적음
+    
+1515 주석 정리 및 구현
+1528 구현완료 후 디버깅
+    답이 다르게 나옴.
+    단계별로 프린트해서 승객 잘 찾는지, 이동거리 일치하는지 확인
+    gr, gc가 이상하다?
+    arr 찍어봄. arr에 음수로 해놓고 그냥 idx 활용한 것 발견해서 -붙여줌
+    그러고 나서도 답이 달랐음 
+    태우고 난 승객 안없앤 것 확인 => 수정 후 정답.
+    
+
+"""
+"""
+n * n 격자의 도로
+차가 지나갈 수 없는 벽의 위치와 m명의 승객의 위치가 주어질 때
+
+승객을 태우러 출발지에 이동할 때에나 태우고 목적지로 이동할 때 항상 최단 거리로 이동
+자율주행 전기차는 한 칸을 이동할 때 1만큼의 배터리를 소요
+승객을 목적지로 무사히 태워주면 그 승객을 태워서 이동하며
+소모한 배터리 양의 두 배만큼을 충전한 뒤 다시 이동
+이동하는 도중에 배터리가 모두 소모되면 그 즉시 종료
+
+만일 승객을 목적지로 이동시킨 동시에 배터리가 모두 소모되는 경우에는
+ 승객을 태우며 소모한 배터리의 두 배만큼 충전되어 다시 운행을 시작할 수 있습니다.
+
+ 승객이 여러명일 경우 현재 위치에서 최단 거리가 가장 짧은 승객을 먼저
+ 만약 그런 승객이 여러 명일 경우에는 가장 위에 있는 승객을,
+ 그런 승객이 여러 명일 때는 가장 왼쪽에 있는 승객을
+
+"""
+from collections import deque
+
+
+def oob(i, j):
+    return i < 0 or j < 0 or i >= N or j >= N
+
+
+def find_passenger():
+    q = deque([(tr, tc, 0)])
+    visited = [[0] * N for _ in range(N)]
+    visited[tr][tc] = 1
+    pr, pc = N, N
+    dist = N * N
+    while q:
+        cr, cc, rank = q.popleft()
+        if arr[cr][cc] < 0:
+            if dist > rank:
+                dist = rank
+                pr, pc = cr, cc
+            elif dist == rank and (pr, pc) > (cr, cc):
+                pr, pc = cr, cc
+                dist = rank
+            continue
+        for di, dj in DIR:
+            du, dv = cr + di, cc + dj
+            if oob(du, dv) or arr[du][dv] == 1 or visited[du][dv]:
+                continue
+
+            q.append((du, dv, rank + 1))
+            visited[du][dv] = 1
+    return pr, pc, dist
+
+
+def bfs_to_goal(sr, sc, idx):
+    gr, gc = p_info[idx]
+    result = -1
+    q = deque([(sr, sc, 0)])
+    visited = [[0] * N for _ in range(N)]
+    visited[sr][sc] = 1
+
+    while q:
+        cr, cc, rank = q.popleft()
+        if cr == gr and cc == gc:
+            return rank
+        for di, dj in DIR:
+            du, dv = cr + di, cc + dj
+            if oob(du, dv) or visited[du][dv] or arr[du][dv] == 1:
+                continue
+            q.append((du, dv, rank + 1))
+            visited[du][dv] = 1
+    return result
+
+
+def change_idx(i):
+    return int(i) - 1
+
+
+# 입력
+N, M, C = map(int, input().split())
+arr = [list(map(int, input().split())) for _ in range(N)]
+tr, tc = map(change_idx, input().split())
+p_info = [-1]
+DIR = (-1, 0), (0, 1), (1, 0), (0, -1)
+for m in range(1, M + 1):
+    sr, sc, er, ec = map(change_idx, input().split())
+    arr[sr][sc] = -m
+    p_info.append((er, ec))
+
+# for문
+for m in range(M):
+    # 태울 승객 찾기
+    pr, pc, rank = find_passenger()
+
+    # 못찾거나 C <0 가 되면 ans -1로 바꾸고 break
+    if pr == N or C - rank < 0:
+        C = -1
+        break
+
+    # 승객 태워다주기
+    C -= rank
+    idx = -arr[pr][pc]
+    gr, gc = p_info[idx]
+    dist = bfs_to_goal(pr, pc, idx)
+    arr[pr][pc] = 0
+    p_info[idx] = -1
+
+    # 못태워다주거나 C<0 되면 BREAK
+    if dist == -1 or C - dist < 0:
+        C = -1
+        break
+    C += dist
+    tr, tc = gr, gc
+
+print(C)
+
+"""
 코드리뷰
 
 풀이 시간 : 1시간 3분

@@ -1,4 +1,136 @@
 """
+1차
+풀이 시간 : 1시간 54분
+시도 횟수 : 2회
+실행 시간 : 584ms
+메모리 : 115204kb
+
+2차
+풀이 시간 : 21분
+시도 횟수 : 2회
+실행 시간 : 1288ms @@ 띠용
+메모리 : 28mb
+
+실수모음
+- 변수명 실수
+- 동시조건 실수
+
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 고려해야할 사항 생각해보기 + 설계에 반영
+    : 동시에인거 놓치지 말자.
+5. 종이에 손설계 OK
+6. 주석으로 구현할 영역 정리 : ok
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인 : 안했음.. 안일했다 ㅠㅠ 흑
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!!
+"""
+"""
+================== 2차 코드 리뷰 ========================
+
+처음보다 못한 코드 띠용 .. 
+코드는 처음보다 깔끔하지만 시간은 후어ㅓ어어얼 씬 느리군 
+egglst 를 안모으고 그냥 한번 더 도는게 빠를 수도 있겠다 ,, 
+문제에 절차별 그림 있으면 제발 확인 한번은 하고 제출해라 ;
+
+2032 문제읽기 + 주석정리
+    이거 많이 틀렷던 기억이 나서 조금 긴장됐다 
+
+2035 설계
+    동시 조건 자주 틀리니까 주의해서 설계함. 
+    lst에 담아서 뿌리는 방식 활용
+    
+2040 구현영역 정리 및 구현
+
+2047 구현완료 후 디버깅
+    왜 하나도 안돌지? 
+    조건 확인하다가 조건문 아예 반대로 쓴 것 발견해서 수정
+2052 제출 후 오답 
+    종료조건에 lst 가 아니라 egg_lst가 비었을 때 멈춰야하는데 실수함
+    
+ 
+
+
+"""
+"""
+
+n * n개의 격자에 1 * 1 크기의 계란틀
+계란틀을 이루는 4개의 선은 분리가 가능
+
+계란의 양이 너무 차이나지 않게 하기 위해
+하나의 선을 맞대고 있는 두 계란틀의 계란의 양의 차이가 L 이상 R 이하라면
+계란틀의 해당 선을 분리합니다.
+
+모든 계란틀에 대해 검사를 실시하고 위의 규칙에 해당하는 모든 계란틀의 선을 분리합니다.
+
+선의 분리를 통해 합쳐진 계란틀의 계란은 하나로 합치고 이후에 다시 분리합니다.
+
+합쳤다 다시 분리한 이후의 각 계란틀별 계란의 양은
+ (합쳐진 계란의 총 합)/(합쳐진 계란틀의 총 개수)가 됩니다. 편의상 소숫점은 버립니다.
+
+계란의 이동이 더 이상 필요 없을 때까지 해당 과정
+"""
+from collections import deque
+
+def bfs(i, j):
+    q = deque([(i, j)])
+    visited[i][j] = 1
+    e_sum = 0
+    lst = []
+    while q:
+        cr, cc = q.popleft()
+        v = arr[cr][cc]
+        lst.append((cr, cc))
+        e_sum+= arr[cr][cc]
+        for di, dj in (-1, 0), (0, 1), (1, 0), (0, -1):
+            du = cr+di
+            dv = cc+dj
+            if du<0 or dv<0 or du>=N or dv>=N:
+                continue
+            if visited[du][dv]:
+                continue
+            if L<= abs(v-arr[du][dv]) <=R:
+                visited[du][dv] = 1
+                q.append((du, dv))
+    if len(lst)>1:
+        return (e_sum, lst)
+    visited[i][j] = 0
+    return 0, []
+
+N, L, R = map(int, input().split())
+
+arr = [list(map(int, input().split())) for _ in range(N)]
+answer = 0
+while 1:
+
+    visited = [[0]*N for _ in range(N)]
+    eggs_lst = [] #계란 합, 좌표lst 담을 것
+    # 합칠 계란틀 lst 준비
+    for i in range(N):
+        for j in range(N):
+            if not visited[i][j]:
+                e_sum, lst = bfs(i, j)
+                if lst:
+                    eggs_lst.append((e_sum, lst))
+    # print(eggs_lst)
+    #lst 비어있으면 종료
+    if not eggs_lst:
+        break
+    #아니면 돌면서 배열 갱신
+    for sum_, lst in eggs_lst:
+        v = sum_ // len(lst)
+        for r, c in lst:
+            arr[r][c] = v
+    # print()
+    # print("=========================")
+    # for k in range(N):
+    #     print(arr[k])
+    # print()
+    answer += 1
+print(answer)
+
+"""
 1501 문제 읽기 시작
 1505 문제 이해 완  + 조건정리, 구상 시작
 1512 구상 완 구현시작
