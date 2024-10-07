@@ -1,3 +1,155 @@
+
+"""
+1차
+풀이 시간 : 35분
+시도 횟수 : 1회
+실행 시간 :844ms
+메모리 : 125988kb
+
+2차
+풀이 시간 : 40분
+시도 횟수 : 1회
+실행 시간 : 1263ms
+메모리 : 30mb
+
+- 실수 모음
+    빙하 크기 구할 때 bfs 시작값 실수
+    동시성 실수
+    회전할 때 기존 배열 사용해서 회전하고 거기에 붙여서 실수..
+    continue로 아래 로직까지 건너뛰어버리는 실수
+
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 테스트케이스 외에 고려해야할 사항 생각해보기 + 설계에 반영
+: 회전을 하는데 그 안의 구역은 회전이 안된다? 배열돌리기4에선가 썼던 방식 써봐야지
+: 빙하 녹일 때 조심하자 동시!
+5. 종이에 손설계 OK
+6. 주석으로 구현할 영역 정리 : ok
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인 : ok
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!! 할필요 ㄴㄴ
+"""
+"""
+=================== 2차 코드 리뷰 ===================
+1408 문제 읽기 + 주석정리 
+1414 설계 시작
+    회전 안에는 모양 유지한체 할 방법 바로 생각 안나서 조금 버벅임,, 
+    그래서 회전 구현할 때 중간테스트 꼭 함,, 
+1437 디버깅
+    q ==0 일 때 continue 시키는 실수 함 
+
+아쉬운 점
+    내가 사용한 배열 회전 방식은 시간이 너무 오래걸린다. 
+    그냥 하드코딩으로 갖다 붙였어도 됐겠다. 
+"""
+"""
+빙하를 회전하는 범위를 레벨
+
+레벨이 L일 때 2**L * 2**L만큼 격자를 선택하여 2**(L-1) * 2**(L-1)만큼 잘라 4등분하여 시계방향 90도회전 
+
+각각의 회전이 모두 끝나고 난 뒤에는 빙하에 속한 얼음이 녹습니다. 
+한 칸을 기준으로 상하좌우 인접한 칸에 얼음이 3개 이상 있는 경우에는 녹지 않습니다.
+그렇지 않은 경우에는 1이 줄어듭니다. 
+
+인접한 칸이 격자를 벗어나는 경우나 해당 칸의 값이 0인 경우에는 얼음이 존재하지 않는다고 생각합니다. 
+얼음이 녹는 것은 동시에 진행됩니다.
+
+출력
+모든 회전을 끝내고 난 뒤에 남아있는 빙하의 총 양과 가장 큰 얼음 군집의 크기
+빙하의 총 양이란 격자에 남은 숫자의 총 합을 뜻하며 얼음 군집이란 연결된 칸의 집합
+"""
+
+from collections import deque
+def rotate_(L, flag):
+    rotate_tmp = [[0]*N for _ in range(N)]
+    #큰 사각형 회전
+    for i in range(0, N, L):
+        for j in range(0, N, L):
+            tmp = [[0]*L for _ in range(L)]
+            for k in range(L):
+                tmp[k] = arr[i+k][j:j+L]
+            if flag:
+                tmp = list(map(list, zip(*tmp[::-1])))
+            else:
+                tmp = list(map(list, zip(*tmp)))[::-1]
+
+            for k in range(L):
+                rotate_tmp[i+k][j:j+L] = tmp[k][:]
+    return rotate_tmp
+
+
+def oob(i, j):
+    return i<0 or j<0 or i>=N or j>=N
+
+def bfs(i, j):
+    visited[i][j] = 1
+    q = deque([(i, j)])
+    size = 0
+
+    while q:
+        cr, cc = q.popleft()
+        size+=1
+        for di, dj in DIR:
+            du, dv = cr+di, cc+dj
+            if oob(du, dv) or arr[du][dv] ==0 or visited[du][dv]:
+                continue
+            q.append((du, dv))
+            visited[du][dv] =1
+    return size
+n, Q = map(int, input().split())
+N = 2**n
+#배열 받기
+arr = [list(map(int, input().split())) for _ in range(N)]
+order_lst = list(map(int, input().split()))
+DIR = (-1, 0), (0, 1), (1, 0), (0, -1)
+ice = [[0] * N for _ in range(N)]
+
+for q in order_lst:
+    if q!=0:
+        L = 2**q
+        arr = rotate_(L, 1)
+        #부분 사각형 반시계 회전
+        arr = rotate_(L//2, 0)
+
+  #############################부분체크
+    # for i in range(N):
+    #     print(arr[i])
+    # print()
+    ############################
+    for i in range(N):
+        for j in range(N):
+            if arr[i][j]==0: continue
+            cnt = 0
+            #상하좌우 인접 빙하 개수 체크
+            for di, dj in DIR:
+                du, dv = i+di, j+dj
+                if oob(du, dv): continue
+                if arr[du][dv] ==0: continue
+                cnt+=1
+                if cnt==3:
+                    break
+            if cnt<3:
+                ice[i][j] -=1
+    for i in range(N):
+        for j in range(N):
+            arr[i][j] += ice[i][j]
+            ice[i][j] = 0
+
+
+
+mx_size = 0
+ice_sum = 0
+visited = [[0]*N for _ in range(N)]
+
+for i in range(N):
+    for j in range(N):
+        ice_sum += arr[i][j]
+        if arr[i][j]>0 and not visited[i][j]:
+            mx_size = max(mx_size, bfs(i, j))
+
+print(ice_sum)
+print(mx_size)
 """
 풀이시간 총 35분
 

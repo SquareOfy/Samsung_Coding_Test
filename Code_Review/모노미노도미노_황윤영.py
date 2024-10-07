@@ -1,4 +1,193 @@
 """
+1차
+풀이 시간 : 1시간 4분
+시도 횟수 : 1회
+실행 시간 :308ms
+메모리 : 118888kb
+
+2차
+풀이 시간 : 1시간 28분
+시도 횟수 : 1회
+실행 시간 : 312ms
+메모리 : 118752kb
+=======================> 다시 풀 문제 당첨 ~~
+
+- 실수 모음
+    - 문제 조건 놓침 ! 행이 밀린 개수가 아니라 다 차서 삭제된 횟수를 더해야했음
+    - 배열 밀기에서 당겨온 후 원래 있던 열 빈칸으로 안만듦
+    - 빨간색 노란색 t에 따라 모양 다른데 실수로 똑같이 구현함
+    -
+Routine
+1. 문제 그냥 정독 ok
+2. 문제 주석 복사 ok
+4. 테스트케이스 외에 고려해야할 사항 생각해보기 + 설계에 반영
+    : 두 색깔 영역을 따로 배열로 만들어 관리해서 코드 깔끔하게 해보자
+    : 줄 한개 밀때 밀고, 다른 한 줄 더 밀지 말고 한번에 밀어보자
+5. 종이에 손설계 : ok
+6. 주석으로 구현할 영역 정리 : ok
+7. 구현 : ok
+8.테스트케이스 단계별 디버깅 확인
+    : 테케 그림과 비교하며 디버깅함
+9. 1시간 지났는데 디버깅 헤매는 중이면 리셋!! 1시간 풀이 후 다음날 아침 다시 풀며 리셋함
+"""
+"""
+======================= 2차 코드 리뷰 ==================
+전날 한시간동안 풀고 디버깅하다가 자야해서 잠.... 
+한시간 후엔 리셋 규칙 지켜보려고 + 전날 녹화 실수로 안했길래 리셋 후 다시시작
+
+0925 문제읽기 주석정리
+0929 설계
+    블록 내리기 / 행 체크 / 지우기 / 연한부분 체크 4개의 함수 설계
+0938 구현 영역 주석 정리 + 구현
+0951 횟수 cnt , block cnt 둘다 테케 안맞아서 pr함수 만들어서 디버깅
+    행 지우는게 이상하다 ! 
+    밑으로 내린 후, 내린 행 0으로 안만들어준것 발견
+    이제 blocks는 맞는데 answer가 안맞다? 
+    문제 조건 다시 확인해서 수정
+    
+"""
+"""
+
+파란색 보드에서의 위치와 타일의 종류가 주어질 때 해당 블록은 빨간색 블록과 노란색 블록으로 각각 이동
+ 노란색 블록의 경우에는 행이 꽉 채워질 경우 지워지게 됩니다. 
+ 빨간색 블록의 경우에는 열이 꽉 채워질 경우 지워지게 됩니다. 
+
+
+한 행이나 열이 가득차서 지워지게 될 때, 지워지는 행이나 열 한 줄당 1점을 획득
+ 여러 줄이 한꺼번에 지워질 수 있습니다.
+ 연한 부분의 블록에 타일이 위치하게 되면 타일들이 차지하는 열이나 행의 개수만큼 지워지고 내려갑니다.
+
+ 행이나 열이 타일로 가득찬 경우와 연한칸에 타일이 있는 경우가 동시에 발생하면
+ 행이나 열이 타일로 가득 찬 경우가 없을 때까지 점수를 획득하는 과정이 모두 진행된 후, 
+ 연한 칸에 블록이 있는 경우를 처리
+
+ 타일은 보드에 놓은 이후에 다른 타일과 합쳐지지 않습니다
+
+ t 
+ 1 : 1*1
+ 2 : yellow에는 1*2 red에는 2*1(세로)
+ 3 : yellow 2*1 / red 1*2
+"""
+
+
+
+
+def change_t(i):
+    if t == 1:
+        return t
+    return 2 if t == 3 else 3
+
+
+# 블록 내린 후 배열 반환 함수
+def down_block(t, c, arr):
+    mxr = 5
+
+    for i in range(6):
+        if arr[i][c] == 1:
+            mxr = i - 1
+            break
+    if t == 2:
+        for i in range(6):
+            if arr[i][c + 1] == 1:
+                mxr = min(i - 1, mxr)
+                break
+
+    lst = [mxr]
+    arr[mxr][c] = 1
+    if t == 2:
+        arr[mxr][c + 1] = 1
+    elif t == 3:
+        arr[mxr - 1][c] = 1
+        lst.append(mxr - 1)
+
+    return arr, lst
+
+
+# 주어진 행이 지워지면 지울 행 반환하는 함수
+def check_delete(arr, lst):
+    delete_lst = []
+    for r in lst:
+        for j in range(4):
+            if arr[r][j] == 0:
+                break
+        else:
+            delete_lst.append(r)
+    return delete_lst
+
+
+# 연한 부분 지워지면 지울 행 반환하는 함수
+def check_delete_light(arr):
+    cnt = 0
+    for i in range(2):
+        for j in range(4):
+            if arr[i][j] == 1:
+                cnt += 1
+                break
+    lst = []
+    for i in range(cnt):
+        lst.append(5 - i)
+    return lst
+
+
+# 리스트에 있는 행 지우고 아래로 내리는 함수
+def delete_arr(delete_lst, arr):
+    cnt = len(delete_lst)
+    mxr = max(delete_lst)
+    for i in range(mxr, cnt - 1, -1):
+        arr[i][:] = arr[i - cnt]
+        arr[i - cnt] = [0] * 4
+    # for i in range(cnt):
+    #     arr[cnt] = [0]*4
+    return arr
+
+
+def pr(string):
+    print(f"=================={string}=================")
+    print("=================yellow================")
+    for z in range(6):
+        print(yellow[z])
+    print("+======================================")
+    print()
+    print("===================red==================")
+    for z in range(6):
+        print(red[z])
+    print("+======================================")
+    print()
+
+
+# 입력
+K = int(input())
+yellow = [[0] * 4 for _ in range(6)]
+red = [[0] * 4 for _ in range(6)]
+answer = 0
+blocks = 0
+
+# 입력 for문 => 블록 내리기 지우기 연한부분 확인하고 지우기 반복
+for k in range(K):
+    t, x, y = map(int, input().split())
+
+    yellow, yellow_fill_lst = down_block(t, y, yellow)
+    red, red_fill_lst = down_block(change_t(t), x, red)
+
+    y_delete_lst = check_delete(yellow, yellow_fill_lst)
+    r_delete_lst = check_delete(red, red_fill_lst)
+    answer += len(y_delete_lst) + len(r_delete_lst)
+
+    if y_delete_lst: yellow = delete_arr(y_delete_lst, yellow)
+    if r_delete_lst: red = delete_arr(r_delete_lst, red)
+    y_delete_lst = check_delete_light(yellow)
+    r_delete_lst = check_delete_light(red)
+    if y_delete_lst:
+        yellow = delete_arr(y_delete_lst, yellow)
+
+    if r_delete_lst:
+        red = delete_arr(r_delete_lst, red)
+print(answer)
+for r in range(6):
+    blocks += sum(yellow[r]) + sum(red[r])
+print(blocks)
+
+"""
 풀이 시간 : 1시간 4분
 실행 시간 :308ms
 메모리 : 118888kb
