@@ -1,4 +1,177 @@
 """
+1차
+풀이 시간 : 1시간 12분
+시도 횟수 : 1회
+실행 시간 : 278ms
+메모리 : 27mb
+
+2차
+풀이 시간 : 1시간
+시도 횟수 : 1회
+실행 시간 : 250ms
+메모리 : 26mb
+
+- 실수 모음
+    - 문제 이해 실수 : 최단거리 공식 알려준 적 없음! bfs 돌려봐야했다
+    - 사용할 변수 헷갈림 이슈 ! : 목적지 찾을 때 넣어야하는 인덱스가 for문 인덱스가 아닌데 실수함 * 2번다 !!
+    - bfs continue 조건 누락
+"""
+"""
+======================= 2차 코드 리뷰 ========================
+1904 문제읽기 + 주석 + 설계
+1919 구현시작
+    - 구현하다가 최단거리 잘못 이해한거 깨닫고 다시 구현
+    
+1949 디버깅
+    에러 
+    목적지 구하는 인덱스 잘못 넣은 것 깨닫고 고침
+    
+    답틀림
+    움직임 전 후 프린트 디버깅
+    움직인 위치 이상하다. mn_dist 적용해서 구해오기 
+    
+    제출 후 에러 오답
+    return이 안된다. 길이 막힌다.
+    프린트해서 잘못 좌표 잡는 부분 없는지 체크 
+    가장 최단거리 베이스캠프 잘못 찾아오는 부분 확인함(손으로 따라가기 + 프린트디버깅)
+    bfs continue 조건 누락 확인 .. 담엔 코드 먼저 보도록 ;; 
+    
+    
+"""
+"""
+빵을 구하고자 하는 m명의 사람
+
+ 1번 사람은 정확히 1분에,...,
+  m번 사람은 정확히 m 분에 각자의 베이스캠프에서 출발하여 편의점으로 이동
+
+사람들이 목표로 하는 편의점은 모두 다릅니다.
+
+1.
+격자에 있는 사람들 모두가 본인이 가고 싶은 편의점 방향을 향해서 1 칸 움직입니다.
+최단거리 : 상하좌우 인접한 칸 중 이동가능한 칸으로만 이동하여
+        도달하기까지 거쳐야 하는 칸의 수가 최소가 되는 거리
+
+2.
+편의점에 도착한다면 해당 편의점에서 멈추게 되고
+다른 사람들은 해당 편의점이 있는 칸을 지나갈 수 없게 됩니다
+격자에 있는 사람들이 모두 이동한 뒤에 해당 칸을 지나갈 수 없어짐
+
+3.
+시간이 t분이고 t ≤ m를 만족
+t번 사람은 자신이 가고 싶은 편의점과 가장 가까이 있는 베이스 캠프에 들어갑니다.
+우선순위 : 행이 작은 베이스캠프, 행이 같다면 열이 작은 베이스 캠프로
+이때부터 다른 사람들은 해당 베이스 캠프가 있는 칸을 지나갈 수 없게 됩니다.
+
+
+"""
+from collections import deque
+
+
+def calculate_dist(r, c, sr, sc):
+    return abs(r - sr) + abs(c - sc)
+
+
+def get_move_loc(i, j, gi, gj):
+    q = deque([(i, j, 0, i, j)])
+    visited = [[0] * N for _ in range(N)]
+    visited[i][j] = 1
+
+    while q:
+        cr, cc, rank, fr, fc = q.popleft()
+        if cr == gi and cc == gj:
+            return fr, fc
+        for di, dj in DIR:
+            du, dv = cr + di, cc + dj
+            if oob(du, dv): continue
+            if arr[du][dv] < 0: continue
+            if visited[du][dv]: continue
+            visited[du][dv] = 1
+            if rank == 0:
+                q.append((du, dv, rank + 1, du, dv))
+            else:
+                q.append((du, dv, rank + 1, fr, fc))
+    # return -1, -1
+
+def oob(i, j):
+    return i < 0 or j < 0 or i >= N or j >= N
+
+
+def find_base(sr, sc):
+    q = deque([(sr, sc, 0)])
+    visited = [[0] * N for _ in range(N)]
+    visited[sr][sc] = 1
+    rr, rc = N, N
+    mn_dist = N*N
+
+    while q:
+        cr, cc, rank = q.popleft()
+        if arr[cr][cc] == 1:
+            if rank < mn_dist:
+                rr, rc = cr, cc
+                mn_dist = rank
+            elif rank == mn_dist and (rr, rc) > (cr, cc):
+                rr, rc = cr, cc
+            continue
+        for di, dj in DIR:
+            du, dv = cr + di, cc + dj
+            if oob(du, dv): continue
+            if visited[du][dv]: continue
+            if arr[du][dv]<0: continue
+            q.append((du, dv, rank+1))
+            visited[du][dv] = 1
+    # print("거리 : ", mn_dist)
+    return rr, rc
+
+# 인덱스 1부터 시작!!
+N, M = map(int, input().split())
+arr = [list(map(int, input().split())) for _ in range(N)]
+# move_arr =[[[] for _ in range(N)] for _ in range(N)]
+store_lst = [-1]
+moving_lst = []
+arrived_cnt = 0
+DIR = (-1, 0), (0, -1), (0, 1), (1, 0)
+time = 0
+for m in range(M):
+    x, y = map(lambda x: int(x) - 1, input().split())
+    store_lst.append((x, y))
+
+
+
+
+
+while arrived_cnt < M:
+    time += 1
+    # 이동
+    arrived_lst = []
+    for m in range(len(moving_lst)):
+        if moving_lst[m] == -1:
+            continue
+
+        num, r, c = moving_lst[m]
+        sr, sc = store_lst[num]
+
+        nr, nc = get_move_loc(r, c, sr, sc)
+
+        if nr == sr and nc == sc:
+            arrived_cnt+=1
+            moving_lst[m] = -1
+            arrived_lst.append((sr, sc))
+        else:
+            moving_lst[m] = (num, nr, nc)
+
+    for x, y in arrived_lst:
+        arr[x][y] = -1
+
+    # 새로운 애 투입
+    if time <= M:
+        sr, sc = store_lst[time]
+        br, bc = find_base(sr, sc)
+        arr[br][bc] = -1
+        moving_lst.append((time, br, bc))
+print(time)
+
+
+"""
 풀이시간 1시간 12분
 
 실행시간 278ms  => 줄여보자 유녕아 ..
