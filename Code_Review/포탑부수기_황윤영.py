@@ -1,4 +1,182 @@
 """
+1차
+풀이 시간 : 1시간 40분
+시도 횟수 : 겁나 많이
+실행 시간 301ms
+메모리 27mb
+
+
+2차
+풀이 시간 : 55분
+시도 횟수 : 3회
+실행 시간 : 363ms
+메모리 : 28mb
+
+
+- 실수 모음
+    - 우선순위 조건 헷갈림 (공격자, 공격대상 반대로 했었음)
+    - 종료 조건 누락( 포탑 개수 1 일 때 종료)
+"""
+from collections import deque
+
+
+def find_attack():
+    mn = float("inf")
+    rr, rc = -1, -1
+    for i in range(N):
+        for j in range(M):
+            if arr[i][j] == 0: continue
+            if arr[i][j] < mn:
+                rr, rc = i, j
+                mn = arr[i][j]
+            elif arr[i][j] == mn:
+                if recent_attack[i][j] > recent_attack[rr][rc]:
+                    rr, rc = i, j
+                elif recent_attack[i][j] == recent_attack[rr][rc]:
+                    if i + j > rr + rc:
+                        rr, rc = i, j
+                    elif i + j == rr + rc and j > rc:
+                        rr, rc = i, j
+
+    return rr, rc
+
+
+def find_target():
+    mx = 0
+    rr, rc = -1, -1
+    for i in range(N):
+        for j in range(M):
+            if arr[i][j] == 0: continue
+            if i == ar and j == ac: continue
+            if arr[i][j] > mx:
+                rr, rc = i, j
+                mx = arr[i][j]
+            elif arr[i][j] == mx:
+                if recent_attack[i][j] < recent_attack[rr][rc]:
+                    rr, rc = i, j
+                elif recent_attack[i][j] == recent_attack[rr][rc]:
+                    if i + j < rr + rc:
+                        rr, rc = i, j
+                    elif i + j == rr + rc and j < rc:
+                        rr, rc = i, j
+
+    return rr, rc
+
+
+# def oob(r, c):
+#     return r<0 or c<0 or r>=N or c>=M
+
+def laser_attack():
+    q = deque([(ar, ac, [])])
+    visited = [[0] * M for _ in range(N)]
+    visited[ar][ac] = 1
+
+    while q:
+        cr, cc, lst = q.popleft()
+        if cr == tr and cc == tc:
+            lst.pop()
+            return 1, lst
+        for di, dj in DIR:
+            du, dv = cr + di, cc + dj
+            du %= N
+            dv %= M
+            if visited[du][dv]:
+                continue
+            if arr[du][dv] == 0:
+                continue
+            q.append((du, dv, lst + [(du, dv)]))
+            visited[du][dv] = 1
+    return 0, []
+
+
+def attack(r, c, power):
+    global top_cnt
+    if arr[r][c] == 0:
+        return
+    arr[r][c] -= power
+    if arr[r][c] <= 0:
+        top_cnt -= 1
+        arr[r][c] = 0
+
+
+def printa(string, arr):
+    print(f"============={string}====================")
+    for i in range(len(arr)):
+        print(arr[i])
+    print("=========================================")
+    print()
+
+
+N, M, K = map(int, input().split())
+recent_attack = [[0] * M for _ in range(N)]
+top_cnt = N * M
+
+arr = [list(map(int, input().split())) for _ in range(N)]
+DIR = (0, 1), (1, 0), (0, -1), (-1, 0)
+diagonal = [(-1, -1), (-1, 1), (1, -1), (1, 1)] + list(DIR)
+
+for i in range(N):
+    top_cnt -= arr[i].count(0)
+
+for k in range(1, K + 1):
+    if top_cnt == 1:
+        break
+
+    # 공격자 찾기(recent 갱신할 것)
+    ar, ac = find_attack()
+    arr[ar][ac] += (N + M)
+    recent_attack[ar][ac] = k
+
+    # 타겟 찾기 ( 공격자 제외할 것)
+    tr, tc = find_target()
+    #
+    # print("==============================")
+    # print("ar, ac : ", ar, ac)
+    # print("tr, tc : ", tr, tc)
+    # printa("최근 공격 현황 ", recent_attack)
+    # printa("현재 arr ", arr)
+
+    # 레이저 공격 가능한지 보기 (가능 여부, 공격 경로 반환)
+    result, lst = laser_attack()
+
+    # 공격 과정에서 0되면 top_cnt 빼기
+    # 가능하면 lst에 있는 레이저 공격 하기 (공격력 절반)
+    # 불가하면 포탑공격하기 ( 공격자 제외하기)
+    if not result:
+        # print("포탑 공격 할 거임")
+        for di, dj in diagonal:
+            du, dv = tr + di, tc + dj
+            du %= N
+            dv %= M
+            if du == ar and dv == ac: continue
+            lst.append((du, dv))
+    related = [[0] * M for _ in range(N)]
+    related[ar][ac] = 1
+    # print(lst)
+    for r, c in lst:
+        related[r][c] = 1
+        if arr[r][c] == 0:
+            continue
+        attack(r, c, arr[ar][ac] // 2)
+
+    # 타겟 공격하기
+    attack(tr, tc, arr[ar][ac])
+    related[tr][tc] = 1
+    # printa("공격 후 arr ", arr)
+    # print(top_cnt)
+
+    for r in range(N):
+        for c in range(M):
+            if not related[r][c] and arr[r][c] != 0:
+                arr[r][c] += 1
+    # printa("더한 후 ", arr)
+
+answer = 0
+for t in range(N):
+    answer = max(answer, max(arr[t]))
+print(answer)
+
+"""
 코드리뷰
 
 풀이시간 : 1시간 40분
@@ -53,6 +231,7 @@
 """
 from collections import deque
 
+
 # 하나의 턴은 다음의 4가지 액션을 순서대로 수행하며, 총 K번 반복
 # 만약 부서지지 않은 포탑이 1개가 된다면 그 즉시 중지
 def select_attack_target():
@@ -69,9 +248,9 @@ def select_attack_target():
     for i in range(N):
         for j in range(M):
             # 1. 공격력이 가장 낮은 포탑이 가장 약한 포탑
-            if arr[i][j]==0:
+            if arr[i][j] == 0:
                 continue
-            if arr[i][j]<mn:
+            if arr[i][j] < mn:
                 attack_player = (i, j)
                 attack_step = recent_attack[i][j]
 
@@ -80,21 +259,21 @@ def select_attack_target():
                 # 2. 가장 최근에 공격한 포탑이 가장 약한 포탑입니다 (모든 포탑은 시점 0에 모두 공격한 경험이 있음)
 
                 if attack_step < recent_attack[i][j]:
-                    attack_player =( i, j)
+                    attack_player = (i, j)
                     attack_step = recent_attack[i][j]
 
                 # 3. 각 포탑 위치의 행과 열의 합이 가장 큰 포탑이 가장 약한 포탑입니다.
                 # 4. 각 포탑 위치의 열 값이 가장 큰 포탑이 가장 약한 포탑입니다.
                 elif attack_step == recent_attack[i][j] and \
-                        (sum(attack_player)<i+j or (sum(attack_player)==i+j and attack_player[1]<j)):
+                        (sum(attack_player) < i + j or (sum(attack_player) == i + j and attack_player[1] < j)):
                     attack_player = (i, j)
                     attack_step = recent_attack[i][j]
 
             # 1. 공격력이 가장 높은 포탑이 가장 강한 포탑
     for i in range(N):
         for j in range(M):
-            if (i, j)==attack_player: continue
-            if arr[i][j]>mx:
+            if (i, j) == attack_player: continue
+            if arr[i][j] > mx:
                 mx = arr[i][j]
                 target_player = (i, j)
                 target_step = recent_attack[i][j]
@@ -107,13 +286,14 @@ def select_attack_target():
                 # 4. 각 포탑 위치의 열 값이 가장 작은 포탑이 가장 강한 포탑
 
                 elif target_step == recent_attack[i][j] and \
-                        (sum(target_player) > i+j or (sum(target_player)==i+j and target_player[1]>j)):
+                        (sum(target_player) > i + j or (sum(target_player) == i + j and target_player[1] > j)):
                     target_player = (i, j)
                     target_step = recent_attack[i][j]
     return attack_player, target_player
 
+
 def get_bfs_attack_lst(ar, ac, tr, tc):
-    visited = [[0]*M for _ in range(N)]
+    visited = [[0] * M for _ in range(N)]
     visited[ar][ac] = 1
     q = deque([(ar, ac, [])])
 
@@ -123,18 +303,15 @@ def get_bfs_attack_lst(ar, ac, tr, tc):
         if cr == tr and cc == tc:
             return lst
         for di, dj in (0, 1), (1, 0), (0, -1), (-1, 0):
-            du = (cr+di)%N
-            dv = (cc+dj)%M
+            du = (cr + di) % N
+            dv = (cc + dj) % M
 
-            if visited[du][dv] or arr[du][dv]==0:
+            if visited[du][dv] or arr[du][dv] == 0:
                 continue
             visited[du][dv] = 1
-            q.append((du, dv, lst+[(du,dv)]))
-
+            q.append((du, dv, lst + [(du, dv)]))
 
     return []
-
-
 
 
 def get_attack_lst(tr, tc):
@@ -142,9 +319,9 @@ def get_attack_lst(tr, tc):
     # 만약 가장자리에 포탄이 떨어졌다면, 위에서의 레이저 이동처럼 포탄의 추가 피해가 반대편 격자에 미치게 됩니다.
     result = []
     for di, dj in (-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1):
-        du = (tr+di)%N
-        dv = (tc+dj)%M
-        if arr[du][dv] == 0 or (du==ar and dv==ac):
+        du = (tr + di) % N
+        dv = (tc + dj) % M
+        if arr[du][dv] == 0 or (du == ar and dv == ac):
             continue
         result.append((du, dv))
     return result
@@ -152,18 +329,18 @@ def get_attack_lst(tr, tc):
 
 def attack_break(tr, tc, attack_lst):
     global cnt
-    arr[tr][tc] = max(arr[tr][tc]-power, 0)
+    arr[tr][tc] = max(arr[tr][tc] - power, 0)
     related_arr[tr][tc] = 1
-    if arr[tr][tc]==0:
-        cnt-=1
-        if cnt==1:
+    if arr[tr][tc] == 0:
+        cnt -= 1
+        if cnt == 1:
             return True
     for r, c in attack_lst:
-        arr[r][c] = max(arr[r][c]-power//2, 0)
+        arr[r][c] = max(arr[r][c] - power // 2, 0)
         related_arr[r][c] = 1
-        if arr[r][c] ==0:
-            cnt-=1
-            if cnt==1:
+        if arr[r][c] == 0:
+            cnt -= 1
+            if cnt == 1:
                 return True
     return False
 
@@ -178,32 +355,32 @@ arr = [list(map(int, input().split())) for _ in range(N)]
 #     print(arr[i])
 
 ##################################3
-cnt = 0 #전체 포탑개수로 1개 되면 아래 즉시 중지 시킬 것
-recent_attack = [[0]*M for _ in range(N)]
+cnt = 0  # 전체 포탑개수로 1개 되면 아래 즉시 중지 시킬 것
+recent_attack = [[0] * M for _ in range(N)]
 
 for i in range(N):
     for j in range(M):
-        if arr[i][j]!=0:
-            cnt+=1
+        if arr[i][j] != 0:
+            cnt += 1
 
-for k in range(1, K+1):
-    related_arr = [[0]*M for _ in range(N)]
+for k in range(1, K + 1):
+    related_arr = [[0] * M for _ in range(N)]
 
     attack_player, target_player = select_attack_target()
     ar, ac = attack_player
     tr, tc = target_player
 
-    #관계된 애들 기록
+    # 관계된 애들 기록
     related_arr[ar][ac] = 1
 
-    #최근 공격시간 기록
+    # 최근 공격시간 기록
     recent_attack[ar][ac] = k
 
     # 핸디캡이 적용되어 N+M만큼의 공격력이 증가
-    arr[ar][ac] += N+M
+    arr[ar][ac] += N + M
     power = arr[ar][ac]
 
-    #공격자, 타겟 선정 체크완#################
+    # 공격자, 타겟 선정 체크완#################
     # print(f"{k}!!!===============================================================")
     # print("===========atack and target ==========")
     # print("attack : ", attack_player)
@@ -212,7 +389,6 @@ for k in range(1, K+1):
     # print("========================================")
     # print()
     # ############################################
-
 
     # 3. 레이저공격 (안 된다면 포탄 공격)
     #      공격자의 위치에서 공격 대상 포탑까지의 최단 경로로 공격
@@ -228,12 +404,12 @@ for k in range(1, K+1):
     #  주위 8개는  절반만
 
     attack_lst = get_bfs_attack_lst(ar, ac, tr, tc)
-    #리스트 비어있으면 포탄공격
+    # 리스트 비어있으면 포탄공격
     if not attack_lst:
         # print("포탑공격해야해!!!")
         attack_lst = get_attack_lst(tr, tc)
         attack_lst.append((tr, tc))
-    attack_lst.pop() #타겟은 여기서 빼기
+    attack_lst.pop()  # 타겟은 여기서 빼기
 
     # print('--------atack lst----------')
     # print(attack_lst)
@@ -253,8 +429,8 @@ for k in range(1, K+1):
     #  공격자도 아니고, 공격에 피해를 입은 포탑 공격력이 1씩 올라갑니다
     for i in range(N):
         for j in range(M):
-            if not related_arr[i][j] and arr[i][j]!=0:
-                arr[i][j] +=1
+            if not related_arr[i][j] and arr[i][j] != 0:
+                arr[i][j] += 1
 
     # print("===============after update====================")
     # for i in range(N):
@@ -262,11 +438,10 @@ for k in range(1, K+1):
     # print("===============================================")
     # print()
 
-
 answer = 0
 for i in range(N):
     for j in range(M):
-        if arr[i][j] !=0 and arr[i][j]>answer:
+        if arr[i][j] != 0 and arr[i][j] > answer:
             answer = arr[i][j]
 
 print(answer)
