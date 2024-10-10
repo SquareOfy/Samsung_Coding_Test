@@ -117,9 +117,6 @@ for i in range(N):
             team_cnt += 1
             team_lst = bfs(i, j)
             team.append(deque(team_lst))
-# print(team)
-# for ii in range(N):
-#     print(visited[ii])
 
 
 # 라운드 돌리기
@@ -144,32 +141,26 @@ for k in range(K):
                 arr[hr][hc] = 2
                 arr[du][dv] = 1
                 break
-    # printa("팀 이동 완료 ", arr)
 
-    # printa("팀 정보 ", team)
     # 라운드 진행
     r, c, d = get_round_idx(k)
-    # print("r, c, d :" , r, c, d)
     di, dj = DIR[d]
+
     for s in range(N):
         dr, dc = r+di*s, c+dj*s
         if 0< arr[dr][dc] < 4:
-            # print("dr, dc  : ", dr, dc)
             team_num = visited[dr][dc]
-            # print("잡힌 팀!!! : ", team_num)
             point = team[team_num].index((dr, dc))+1
-            # print("point : ", point)
             answer += point **2
-            # 점수 얻으면 그 팀 뒤집기
             team[team_num].reverse()
+
             hr, hc = team[team_num][0]
             tr, tc = team[team_num][-1]
+
             arr[hr][hc] = 1
             arr[tr][tc] = 3
 
             break
-    # printa("라운드 진행 완료 ", arr)
-    # printa("라운드 진행 후 팀", team)
 print(answer)
 
 """
